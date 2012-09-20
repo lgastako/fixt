@@ -9,8 +9,8 @@ class TestImplicitInvocation(FixtCommonTests):
 
     def test_insert_to_users(self):
         q = _.INSERT(_.users,
-                        username='lgastako',
-                        pw_hash=self.EX_PW_HASH)
+                     username='lgastako',
+                     pw_hash=self.EX_PW_HASH)
 
         assert str(q) in (("INSERT INTO users (username, pw_hash)\n"
                            "VALUES (%(username)X, %(pw_hash)X)"),
@@ -22,7 +22,7 @@ class TestImplicitInvocation(FixtCommonTests):
         # to preserve parity with the explicit case.
 
         q = (_.SELECT(_.username, _.u.pw_hash.AS('bcrypt_pw'))
-                .FROM(_.users.AS('u')))
+              .FROM(_.users.AS('u')))
 
         assert str(q) == ("SELECT username, u.pw_hash AS bcrypt_pw\n"
                           "FROM users AS u")

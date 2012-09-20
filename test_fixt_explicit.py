@@ -29,7 +29,7 @@ class TestExplicitInvocation(FixtCommonTests):
         # projection.
 
         q = (SELECT(username, u.pw_hash.AS('bcrypt_pw'))
-                .FROM(users.AS('u')))
+             .FROM(users.AS('u')))
 
         assert str(q) == ("SELECT username, u.pw_hash AS bcrypt_pw\n"
                           "FROM users AS u")

@@ -75,7 +75,7 @@ class VarProxy(object):
         return res
 
     def AS(self, alias):
-        return ASProxy(self.name, alias, self.missing_source)
+        return ASProxy(str(self), alias, self.missing_source)
     as_ = AS
 
     def __getattr__(self, key):
@@ -83,8 +83,6 @@ class VarProxy(object):
         if self.prefix:
             new_prefix = self.prefix + "." + new_prefix
         proxy = VarProxy(key, self.missing_source, new_prefix)
-        if key == "pw_hash":
-            import ipdb; ipdb.set_trace()
         return proxy
 
     def __missing__(self, key):

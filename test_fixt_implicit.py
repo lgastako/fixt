@@ -13,5 +13,6 @@ class TestImplicitInvocation(FixtCommonTests):
     def select_from_users_with_aliases(self):
         # Note we could just use _.pw_hash here, but we use the u alias
         # to preserve compatability with the explicit case.
-        return (_.SELECT(_.username, _.u.pw_hash.AS('bcrypt_pw'))
-                .FROM(_.users.AS('u')))
+        sel = _.SELECT(_.username, _.u.pw_hash.AS('bcrypt_pw'))
+        fro = sel.FROM(_.users.AS('u'))
+        return fro

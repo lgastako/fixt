@@ -19,5 +19,11 @@ class TestExplicitInvocation(FixtCommonTests):
         # by explicitly importing the u alias and then using that.  Obviously
         # this is more important when there are more attributes in the
         # projection.
-        return (SELECT(username, u.pw_hash.AS('bcrypt_pw'))
-                .FROM(users.AS('u')))
+
+        y = u.pw_hash
+        assert str(y) == "u.pw_hash"
+        x = y.AS('bcrypt_pw')
+        assert str(x) == "u.pw_hash AS bcrypt_pw"
+        sel = SELECT(username, x)
+        fro = sel.FROM(users.AS('u'))
+        return fro

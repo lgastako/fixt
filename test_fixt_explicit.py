@@ -1,4 +1,5 @@
 from fixt import INSERT
+from fixt import SELECT
 from fixt import users
 from fixt import username
 from fixt import u
@@ -19,4 +20,4 @@ class TestExplicitInvocation(FixtCommonTests):
         # this is more important when there are more attributes in the
         # projection.
         return (SELECT(username, u.pw_hash.AS('bcrypt_pw'))
-                .FROM(users.AS('u')) 
+                .FROM(users.AS('u')))

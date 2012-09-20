@@ -8,20 +8,46 @@ if "windows" in platform.system().lower():
     raise ImportError("fixt is currently only supported on linux and osx.")
 
 
-def SELECT(*args):
-    attr_name_list = ", ".join(map(str, args))
-    return "SELECT %s" % attr_name_list
+def sql_list(*args):
+    return ", ".join(map(str, args))
 
 
-def INSERT(table_name, **binds):
-    attr_nvps = [(name, value) for name, value in binds.iteritems()]
-    attr_name_list = ", ".join(n for n, _ in attr_nvps)
-    attr_value_fmt = ", ".join("%%(%s)X" % attr_name
-                                    for attr_name, _
-                                    in attr_nvps)
-    sql = "INSERT INTO %s (%s)\nVALUES (%s)" % (
-        str(table_name), attr_name_list, attr_value_fmt)
-    return sql
+class FROM(object):
+
+    def __init__(self, prefix, *args):
+        self.prefix = prefix
+        self.from_clause = sql_list(*args)
+
+    def __str__(self):
+        return "%s\nFROM %s" % (self.prefix, self.from_clause)
+
+
+class SELECT(object):
+
+    def __init__(self, *args):
+        attr_name_list = sql_list(*args)
+        self.sql = "SELECT %s" % attr_name_list
+
+    def __str__(self):
+        return self.sql
+
+    def FROM(self, *args):
+        return FROM(str(self), *args)
+
+
+class INSERT(object):
+
+    def __init__(self, table_name, **binds):
+        attr_nvps = [(name, value) for name, value in binds.iteritems()]
+        attr_name_list = ", ".join(n for n, _ in attr_nvps)
+        attr_value_fmt = ", ".join("%%(%s)X" % attr_name
+                                   for attr_name, _
+                                   in attr_nvps)
+        self.sql = "INSERT INTO %s (%s)\nVALUES (%s)" % (
+            str(table_name), attr_name_list, attr_value_fmt)
+
+    def __str__(self):
+        return self.sql
 
 
 class ASProxy(object):
@@ -31,25 +57,35 @@ class ASProxy(object):
         self.alias = alias
         self.missing_source = missing_source
 
-    def __str(self):
+    def __str__(self):
         return "%s AS %s" % (self.expr, self.alias)
 
 
 class VarProxy(object):
 
-    def __init__(self, name, missing_source):
+    def __init__(self, name, missing_source, prefix=""):
         self.name = name
         self.missing_source = missing_source
+        self.prefix = prefix
 
     def __str__(self):
-        return self.name
+        res = self.name
+        if self.prefix:
+            res = "%s.%s" % (self.prefix, res)
+        return res
 
     def AS(self, alias):
         return ASProxy(self.name, alias, self.missing_source)
     as_ = AS
 
     def __getattr__(self, key):
-        return self.missing_source.__missing__(key)
+        new_prefix = self.name
+        if self.prefix:
+            new_prefix = self.prefix + "." + new_prefix
+        proxy = VarProxy(key, self.missing_source, new_prefix)
+        if key == "pw_hash":
+            import ipdb; ipdb.set_trace()
+        return proxy
 
     def __missing__(self, key):
         return self.missing_source.__missing__(key)
@@ -99,7 +135,10 @@ class SelfWrapper(ModuleType):
         self.self_module = self_module
         # self.env = Environment(globals())
         self.env = Environment({
-            "INSERT": INSERT
+            "INSERT": INSERT,
+            "SELECT": SELECT,
+            "VarProxy": VarProxy,
+            "Environment": Environment
         })
 
     def __getattr__(self, name):
